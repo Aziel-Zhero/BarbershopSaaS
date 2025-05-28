@@ -1,6 +1,8 @@
-const { PrismaClient } = require("@prisma/client");
+import { PrismaClient } from '@prisma/client'
+import { withAccelerate } from '@prisma/extension-accelerate'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends(withAccelerate())
+
 
 async function seedDatabase() {
   try {
