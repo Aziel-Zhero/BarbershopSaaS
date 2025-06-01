@@ -1,113 +1,124 @@
-import PhoneItem from "@/app/_components/phone-item"
-import ServiceItem from "@/app/_components/service-item"
-import SidebarSheet from "@/app/_components/sidebar-sheet"
-import { Button } from "@/app/_components/ui/button"
-import { Sheet, SheetTrigger } from "@/app/_components/ui/sheet"
-import { db } from "@/app/_lib/prisma"
-import { ChevronLeftIcon, MapPinIcon, MenuIcon, StarIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { formatPrice } from "@/lib/utils"
+import { ChevronLeftIcon, MapPinIcon, StarIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import BookingModal from "@/components/booking-modal"
 
-interface BarbershopPageProps {
+interface BarbershopDetailsPageProps {
   params: {
     id: string
   }
 }
 
-const BarbershopPage = async ({ params }: BarbershopPageProps) => {
-  // chamar o meu banco de dados
-  const barbershop = await db.barbershop.findUnique({
-    where: {
-      id: params.id,
+const mockBarbershop = {
+  id: "1",
+  name: "Barbearia Vintage",
+  address: "Rua das Flores, 123",
+  imageUrl: "/barbershop-1.jpg",
+  rating: 4.8,
+  services: [
+    {
+      id: "1",
+      name: "Corte de Cabelo",
+      description: "Corte tradicional com tesoura ou máquina",
+      price: 35,
+      imageUrl: "/haircut.jpg"
     },
-    include: {
-      services: true,
+    {
+      id: "2",
+      name: "Barba",
+      description: "Modelagem e hidratação da barba",
+      price: 25,
+      imageUrl: "/beard.jpg"
     },
-  })
+    {
+      id: "3",
+      name: "Corte e Barba",
+      description: "Pacote completo de corte e barba",
+      price: 55,
+      imageUrl: "/haircut-beard.jpg"
+    }
+  ]
+}
 
-  if (!barbershop) {
-    return notFound()
-  }
-
+const BarbershopDetailsPage = ({ params }: BarbershopDetailsPageProps) => {
   return (
-    <div>
-      {/* IMAGEM */}
+    <div className="flex flex-col gap-6 pb-6">
       <div className="relative h-[250px] w-full">
-        <Image
-          alt={barbershop.name}
-          src={barbershop?.imageUrl}
-          fill
-          className="object-cover"
-        />
-
-        <Button
-          size="icon"
-          variant="secondary"
-          className="absolute left-4 top-4"
-          asChild
-        >
-          <Link href="/">
+        <Link href="/" className="absolute left-4 top-4 z-50">
+          <Button size="icon" variant="outline">
             <ChevronLeftIcon />
-          </Link>
-        </Button>
+          </Button>
+        </Link>
 
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              size="icon"
-              variant="outline"
-              className="absolute right-4 top-4"
-            >
-              <MenuIcon />
-            </Button>
-          </SheetTrigger>
-          <SidebarSheet />
-        </Sheet>
+        <Image
+          src={mockBarbershop.imageUrl}
+          alt={mockBarbershop.name}
+          fill
+          style={{ objectFit: "cover" }}
+        />
       </div>
 
-      {/* TÍTULO */}
-      <div className="border-b border-solid p-5">
-        <h1 className="mb-3 text-xl font-bold">{barbershop.name}</h1>
-        <div className="mb-2 flex items-center gap-2">
-          <MapPinIcon className="text-primary" size={18} />
-          <p className="text-sm">{barbershop?.address}</p>
+      <div className="px-5 flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold">{mockBarbershop.name}</h1>
+          
+          <div className="flex items-center gap-2">
+            <MapPinIcon className="text-primary" size={18} />
+            <p className="text-sm">{mockBarbershop.address}</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <StarIcon className="text-primary" size={18} />
+            <p className="text-sm">{mockBarbershop.rating}</p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <StarIcon className="fill-primary text-primary" size={18} />
-          <p className="text-sm">5,0 (499 avaliações)</p>
+        <div className="flex flex-col gap-3">
+          <h2 className="text-xs uppercase text-gray-400 font-bold">Serviços</h2>
+
+          <div className="flex flex-col gap-3">
+            {mockBarbershop.services.map((service) => (
+              <Card key={service.id}>
+                <CardContent className="p-3 flex gap-4">
+                  <div className="relative min-h-[110px] min-w-[110px]">
+                    <Image
+                      src={service.imageUrl}
+                      alt={service.name}
+                      fill
+                      style={{ objectFit: "cover" }}
+                      className="rounded-lg"
+                    />
+                  </div>
+
+                  <div className="flex flex-col w-full">
+                    <h3 className="font-bold">{service.name}</h3>
+                    <p className="text-sm text-gray-400">{service.description}</p>
+
+                    <div className="flex items-center justify-between mt-3">
+                      <p className="text-primary text-sm font-bold">
+                        {formatPrice(service.price)}
+                      </p>
+                      <BookingModal
+                        barbershop={{
+                          id: mockBarbershop.id,
+                          name: mockBarbershop.name,
+                          imageUrl: mockBarbershop.imageUrl,
+                        }}
+                        service={service}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
-
-      {/* DESCRIÇÃO */}
-      <div className="space-y-2 border-b border-solid p-5">
-        <h2 className="text-xs font-bold uppercase text-gray-400">Sobre nós</h2>
-        <p className="text-justify text-sm">{barbershop?.description}</p>
-      </div>
-
-      {/* SERVIÇOS */}
-      <div className="space-y-3 border-b border-solid p-5">
-        <h2 className="text-xs font-bold uppercase text-gray-400">Serviços</h2>
-        <div className="space-y-3">
-          {barbershop.services.map((service) => (
-            <ServiceItem
-              key={service.id}
-              barbershop={JSON.parse(JSON.stringify(barbershop))}
-              service={JSON.parse(JSON.stringify(service))}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* CONTATO */}
-      <div className="space-y-3 p-5">
-        {barbershop.phones.map((phone) => (
-          <PhoneItem key={phone} phone={phone} />
-        ))}
       </div>
     </div>
   )
 }
 
-export default BarbershopPage
+export default BarbershopDetailsPage
